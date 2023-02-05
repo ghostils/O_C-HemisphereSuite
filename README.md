@@ -3,6 +3,15 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 
 ![My image](https://farm1.staticflickr.com/676/20090774694_b56e557693_b.jpg)
 
+### updates:
+2/5/2023 - HEM_ADSREG.ino
+<ul>
+<li>Envelopes are now independent for control and mod source/destination allowing two individual ADSR's with Release MOD CV input per hemisphere.</li>  
+<li>CV mod is now limited to release for each channel.</li>
+Output Level indicators have been shrunk to make room for additional on screen indicators for which envelope you are editing.
+<li>Switching between envelopes is currently handled by simply pressing the encoder button until you pass the release stage on each envelope which will toggle the active envelope you are editing</li>
+<li>Envelope is indicated by A or B just above the ADSR segments.</li>
+</ul>
 
 ### firmware:
 
