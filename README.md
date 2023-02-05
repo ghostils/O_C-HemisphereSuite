@@ -13,9 +13,9 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 2/5/2023 - HEM_ADSREG.ino
 <ul>
 <li>Envelopes are now editable independently giving up to 2 unique/triggerable ADSR's per hemisphere.</li>  
-<li>CV modulation is now limited to release for each channel.</li>
-<li>Switching between envelopes is currently handled by simply pressing the encoder button until you pass the release stage on each envelope which will toggle the active envelope you are editing</li>
-<li>Envelope is indicated by A or B just above the ADSR segments.</li>
+<li>CV modulation is now limited to the release stage for each channel.</li>
+<li>Switching between envelopes is currently handled by simply pressing the encoder button until you pass the release stage on each envelope which will toggle the active envelope you are editing.</li>
+<li>Active envelope you are editing is indicated by A or B just above the ADSR segments.</li>
 </ul>
 
 ### firmware:
