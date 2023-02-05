@@ -1,7 +1,7 @@
 Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 ===
 
-### goals
+### goals for this fork:
 2/5/2023
 <ul>  
   <li>Make some usability tweaks to specific applets.</li>
