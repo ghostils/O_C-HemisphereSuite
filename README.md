@@ -18,6 +18,13 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 <li>Active envelope you are editing is indicated by A or B just above the ADSR segments.</li>
 </ul>
 
+2/6/2023 - App Removal for more code space
+<ul>
+<li> REMOVED - Darkest Timeline </li>
+<li> REMOVED - Neural Net </li>
+<li> REMOVED - Pong </li> 
+</ul>
+
 ### firmware:
 
 Hemisphere Suite is an open-source project by Jason Justian (aka chysn)
