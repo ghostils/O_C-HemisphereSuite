@@ -11,7 +11,7 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 
 ### updates:
 
-2/6/2023 - App Removal for more code space
+2/6/2023 - App Removal for more code space added new ADSREGPLUS Applet base for testing. 
 <ul>
 <li> REMOVED - Darkest Timeline </li>
 <li> REMOVED - Neural Net </li>
