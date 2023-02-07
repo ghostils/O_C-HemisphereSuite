@@ -10,6 +10,14 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 -ghostils
 
 ### updates:
+
+2/6/2023 - App Removal for more code space added new ADSREGPLUS Applet base for testing. 
+<ul>
+<li> REMOVED - Darkest Timeline </li>
+<li> REMOVED - Neural Net </li>
+<li> REMOVED - Pong </li> 
+</ul>
+
 2/5/2023 - HEM_ADSREG.ino
 <ul>
 <li>Envelopes are now editable independently giving up to 2 unique/triggerable ADSR's per hemisphere.</li>  
@@ -17,6 +25,7 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 <li>Switching between envelopes is currently handled by simply pressing the encoder button until you pass the release stage on each envelope which will toggle the active envelope you are editing.</li>
 <li>Active envelope you are editing is indicated by A or B just above the ADSR segments.</li>
 </ul>
+
 
 ### firmware:
 
