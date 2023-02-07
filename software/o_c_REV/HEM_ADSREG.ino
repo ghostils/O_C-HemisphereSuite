@@ -44,8 +44,11 @@
 #define HEM_SUSTAIN_CONST 35
 #define HEM_EG_DISPLAY_HEIGHT 30
 
-//-ghostilils: DEFINE Main menu inactivity timeout ~5secs this will return the user to the main menu:
-#define HEM_EG_UI_INACT_TIMER 41666
+//-ghostils: DEFINE Main menu inactivity timeout ~5secs this will return the user to the main menu:
+#define HEM_EG_UI_INACT_TICKS 41666
+
+//-ghostils: amount of time to handle Double Encoder Press ~250ms.
+#define HEM_EG_UI_DBLPRESS_TICKS 4096
 
 // About four seconds
 #define HEM_EG_MAX_TICKS_AD 33333
@@ -83,13 +86,9 @@ public:
         //-ghostils:Multiple ADSR Envelope Tracking:
         curEG = 0;
 
-        //-ghostils:UI Elements:
-        uiInactivityTimer = 0;
-        uiMainActive = 0;
     }
 
-    void Controller() {
-        
+    void Controller() {            
         // Look for CV modification        
         //attack_mod = get_modification_with_input(0);        
         //release_mod[0] = get_modification_with_input(1);
@@ -125,42 +124,36 @@ public:
                 }
                 gated[ch] = 0;
             }
-
+    
+                
             Out(ch, GetAmplitudeOf(ch));
         }
-    }
-
-    void View() {
-        gfxHeader(applet_name());
-        DrawIndicator();
-        DrawADSR();
-
         
     }
 
-    void OnButtonPress() {        
-        //if (++edit_stage > HEM_EG_RELEASE) {edit_stage = HEM_EG_ATTACK;}
-        //-ghostils: flip editing focus between A/B ADSR when we hit the end of the Release stage:
-        if (++edit_stage > HEM_EG_RELEASE) {
-            edit_stage = HEM_EG_ATTACK;
-            curEG ^= 1;
-        } 
-
-        //-ghostils: Button pressed, reset inactivity timer:
-        uiInactivityTimer = 0;
+    void View() {
+        gfxHeader(applet_name());            
+        DrawIndicator();
+        DrawADSR();        
     }
 
-    void OnEncoderMove(int direction) {
+    void OnButtonPress() {        
+      //if (++edit_stage > HEM_EG_RELEASE) {edit_stage = HEM_EG_ATTACK;}
+      //-ghostils: flip editing focus between A/B ADSR when we hit the end of the Release stage:
+      if (++edit_stage > HEM_EG_RELEASE) {
+        edit_stage = HEM_EG_ATTACK;
+        curEG ^= 1;
+        }                                            
+    }
+
+    void OnEncoderMove(int direction) {                
         //-ghostils:Reference curEG as the indexer to current ADSR when editing stages:
         int adsr[4] = {attack[curEG], decay[curEG], sustain[curEG], release[curEG]};
         adsr[edit_stage] = constrain(adsr[edit_stage] += direction, 1, HEM_EG_MAX_VALUE);
         attack[curEG] = adsr[HEM_EG_ATTACK];
         decay[curEG] = adsr[HEM_EG_DECAY];
         sustain[curEG] = adsr[HEM_EG_SUSTAIN];
-        release[curEG] = adsr[HEM_EG_RELEASE];
-
-        //-ghostils: Encoder moved, reset inactivity timer:
-        uiInactivityTimer = 0;        
+        release[curEG] = adsr[HEM_EG_RELEASE];        
     }
 
     uint32_t OnDataRequest() {
@@ -216,14 +209,7 @@ private:
     
     //-ghostils:Additions for tracking multiple ADSR's in each Hemisphere:
     int curEG;
-
-
-    //-ghostils: New UI elements:
-    int uiInactivityTimer;
-    int uiMainActive;
-   
-   
-
+     
     // Stage management
     int stage[2]; // The current ASDR stage of the current envelope
     int stage_ticks[2]; // Current number of ticks into the current stage
@@ -250,7 +236,7 @@ private:
         }else{
           gfxPrint(0,22,"B");
           gfxInvert(0,21,7,9);
-        }
+        }      
     }
 
     void DrawADSR() {
