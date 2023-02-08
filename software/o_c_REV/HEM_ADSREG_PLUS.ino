@@ -64,7 +64,7 @@
 #define HEM_EG_UI_FIRST_MENU_ITEM 0 
 #define HEM_EG_UI_LAST_MENU_ITEM  9
 #define HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM 0
-#define HEM_EG_UI_LAST_CV_MOD_DEST_ITEM 3
+#define HEM_EG_UI_LAST_CV_MOD_DEST_ITEM 4
 
 #define HEM_EG_UI_MAIN_MENU 0
 #define HEM_EG_UI_EG1_MENU 1
@@ -94,12 +94,13 @@ typedef enum{
     EG2_Env_Out_Strength = 9
 }menuItems_t;
 
-//-ghostils:Modulation Selections:
+//-ghostils:Modulation Destinations:
 typedef enum{
   ATTACK = 0,
   DECAY = 1,
   SUSTAIN = 2,
-  RELEASE = 3
+  RELEASE = 3,
+  STRENGTH = 4
 }cvModDest_t;
 
 class ADSREGPLUS : public HemisphereApplet {
@@ -146,7 +147,7 @@ public:
         
         //-ghostils: Init mod destination values: 
         for(int i = 0; i < 2; i++){
-          for(int j = 0; j < 4; j++){
+          for(int j = 0; j < 5; j++){
               cvModDestVal[i][j] = 0;                                 
           }
         }
@@ -200,9 +201,9 @@ public:
                 gated[ch] = 0;
             }
                       
-            //-ghostils:Attenuate/Proportion Output based on EG strength value: Lock to 0 - MAX CV:
-            //Out(ch, GetAmplitudeOf(ch));                        
-            int signal = Proportion(GetAmplitudeOf(ch),100,curCVAMPStr[ch]);                                    
+            //-ghostils:Attenuate/Proportion Output based on EG strength value: Lock to 0 - MAX CV add any modulation from CV and internal
+            //Out(ch, GetAmplitudeOf(ch));                               
+            int signal = Proportion(GetAmplitudeOf(ch),100,curCVAMPStr[ch] + cvModDestVal[ch][STRENGTH]);                                    
             Out(ch,constrain(signal,0,HEMISPHERE_MAX_CV));
             
             
@@ -250,7 +251,12 @@ public:
             DrawMainMenu();
             DrawEG1OutStrMenu();
             break;
-         
+
+          case HEM_EG_UI_EG2_ENV_OUT_STR:
+            DrawMainMenu();
+            DrawEG2OutStrMenu();
+            break;
+                     
           default:
             DrawMainMenu();
             break;
@@ -288,6 +294,10 @@ public:
 
         case EG1_Env_Out_Strength: 
           curMenu = HEM_EG_UI_EG1_ENV_OUT_STR;
+        break;
+
+        case EG2_Env_Out_Strength: 
+          curMenu = HEM_EG_UI_EG2_ENV_OUT_STR;
         break;
                 
         default:
@@ -342,22 +352,22 @@ public:
           if(curCV1ModDestItem == HEM_EG_UI_LAST_CV_MOD_DEST_ITEM){
             curCV1ModDestItem = HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 4; i++) {cvModDestVal[0][i] = 0;}            
+            for(int i = 0; i < 5; i++) {cvModDestVal[0][i] = 0;}            
           }else{
             curCV1ModDestItem++;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 4; i++) {cvModDestVal[0][i] = 0;}            
+            for(int i = 0; i < 5; i++) {cvModDestVal[0][i] = 0;}            
           }
                        
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_CV1_DEST_MENU) {
           if(curCV1ModDestItem == HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM){
             //-ghostils:clear existing destination before setting new:
             curCV1ModDestItem = HEM_EG_UI_LAST_CV_MOD_DEST_ITEM;
-            for(int i = 0; i < 4; i++) {cvModDestVal[0][i] = 0;}                       
+            for(int i = 0; i < 5; i++) {cvModDestVal[0][i] = 0;}                       
           }else{
             curCV1ModDestItem--;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 4; i++) {cvModDestVal[0][i] = 0;}            
+            for(int i = 0; i < 5; i++) {cvModDestVal[0][i] = 0;}            
           }             
         }
 
@@ -366,22 +376,22 @@ public:
           if(curCV2ModDestItem == HEM_EG_UI_LAST_CV_MOD_DEST_ITEM){
             curCV2ModDestItem = HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 4; i++) {cvModDestVal[1][i] = 0;}            
+            for(int i = 0; i < 5; i++) {cvModDestVal[1][i] = 0;}            
           }else{
             curCV2ModDestItem++;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 4; i++) {cvModDestVal[1][i] = 0;}            
+            for(int i = 0; i < 5; i++) {cvModDestVal[1][i] = 0;}            
           }
                        
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_CV2_DEST_MENU) {
           if(curCV2ModDestItem == HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM){
             //-ghostils:clear existing destination before setting new:
             curCV2ModDestItem = HEM_EG_UI_LAST_CV_MOD_DEST_ITEM;
-            for(int i = 0; i < 4; i++) {cvModDestVal[1][i] = 0;}                       
+            for(int i = 0; i < 5; i++) {cvModDestVal[1][i] = 0;}                       
           }else{
             curCV2ModDestItem--;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 4; i++) {cvModDestVal[1][i] = 0;}            
+            for(int i = 0; i < 5; i++) {cvModDestVal[1][i] = 0;}            
           }             
         }
 
@@ -397,6 +407,21 @@ public:
             curCVAMPStr[0] = 100;
           }else{
             curCVAMPStr[0]--;
+          }             
+        }
+       
+        //-ghostils:EG2 Amp Output Strength:
+        if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG2_ENV_OUT_STR){
+          if(curCVAMPStr[1] >= 100){           
+            curCVAMPStr[1] = 0;
+          }else{
+            curCVAMPStr[1]++;            
+          }                      
+        } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG2_ENV_OUT_STR) {
+          if(curCVAMPStr[1] <= 0){
+            curCVAMPStr[1] = 100;
+          }else{
+            curCVAMPStr[1]--;
           }             
         }
     }
@@ -452,7 +477,7 @@ private:
     int release_mod[2]; // Modification to release from CV2
     int cv1;
     int cv2;
-    int cvModDestVal[2][4];
+    int cvModDestVal[2][5];
     
     //-ghostils:Additions for tracking multiple ADSR's in each Hemisphere:
     int curEG;
@@ -466,7 +491,7 @@ private:
     int menuX[10] = {0,0,0,0,0,38,38,38,38,38}; 
     int menuY[10] = {14,22,30,38,46,14,22,30,38,46}; 
 
-    char *curCVModDestStr[4] = {"ATK","DEC","SUS","REL"};
+    char *curCVModDestStr[5] = {"ATK","DEC","SUS","REL","STR"};
     int curCV1ModDest;
     int curCV1ModDestItem;
     int curCV2ModDest;
@@ -586,9 +611,16 @@ private:
 
     void DrawEG1OutStrMenu(){            
       //-ghostils:Draw CV Mod Destination String:
-      gfxPrint(0,54,curCVAMPStr[0]);            
+      gfxPrint(0,54,curCVAMPStr[0]);                  
       //-ghostils:Highlight CV1 Mod Destintation Value:     
       gfxInvert(0,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+    }
+    
+    void DrawEG2OutStrMenu(){            
+      //-ghostils:Draw CV Mod Destination String:
+      gfxPrint(38,54,curCVAMPStr[1]);            
+      //-ghostils:Highlight CV1 Mod Destintation Value:     
+      gfxInvert(38,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
     }
 
 
