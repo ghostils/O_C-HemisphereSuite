@@ -15,7 +15,8 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 <li> Added simple one page menu for EG1/EG2, press encoder on item to edit item in place. Timeout timer returns you to main menu for ALL sub menus/items after value is set. Moving or clicking encoder will reset timeout timer so you may continue editing a parameter.</li>
 <li> EG1/EG2 edit buttons functional - Press encoder button on EG1/EG2 and you edit the envelop visually (reuses HEM_ADSREG.ino code).</li>
 <li> EG1/EG2 CV1/CV2 destintation routing functional to Attack,Decay,Sustain,Release parameters CV1->EG1,CV2-EG2.</li> 
-<li> EG1 Envelope output strength attenuation is functional. Once working on both channels we will add this as a modualation destination as well. </li> 
+<li> EG1/EG2 Envelope output strength attenuation is functional. </li> 
+<li> EG1/EG2 Envelope output strength available as a CV modulation destination </li>
 </ul>
 
 
