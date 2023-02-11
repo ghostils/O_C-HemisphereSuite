@@ -14,11 +14,12 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 <ul>
 <li> Added internal modulation source destination for EG1/EG2 for Attack,Decay Sustain,Release,Envelope output strength. </li> 
 <li> Positive modulation supported by clock sub division over steps equal to the max clock divior or lower, ie divide by 2 and you can apply for up to 2 steps. </li> 
-<ul> TODO: 
+<li> TODO: </li> 
+<ul>
   <li>Probability as the additional internal modulation source. </li> 
   <li>Support for bi-polar modulation internally</li>
   <li>Support for Sample and Hold as an internal modulation source based on incomming CV or specific active envelop stage </li>
-</ul> 
+</ul>
 </ul>
 
 2/7/2023 - HEM_ADSREGPLUS.ino
