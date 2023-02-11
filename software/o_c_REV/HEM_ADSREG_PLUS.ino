@@ -28,10 +28,10 @@
   * Envelope is indicated by A or B just above the ADSR segments.
   * 
   * TODO Features/UI: 
-  * Implement Menu System to select which EG and parameters to edit. (Attempt to keep this as one screen if possible). Would like to keep visual envelop editing, may need to implement timer based menu return with interruption time out.
+  * *COMPLETE* Implement Menu System to select which EG and parameters to edit. (Attempt to keep this as one screen if possible). Would like to keep visual envelop editing, may need to implement timer based menu return with interruption time out.
   * 
-  * Add CV Routing selection to any STAGE.
-  * Add Envelope output scaling to not require external attenuator/attenuverter for flexibility. 
+  * *COMPLETE* Add CV Routing selection to any STAGE.
+  * *COMPLETE* Add Envelope output scaling to not require external attenuator/attenuverter for flexibility. 
   * Add Gate triggered modulation source that can be assigned to any specific stage of the envelope and controlled by delayed number of gates or simple random probability.
   * Underpants
   * ???
@@ -65,6 +65,29 @@
 #define HEM_EG_UI_LAST_MENU_ITEM  9
 #define HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM 0
 #define HEM_EG_UI_LAST_CV_MOD_DEST_ITEM 4
+#define HEM_EG_UI_EG1_INT_MOD_TYPE_FIRST_ITEM 0
+#define HEM_EG_UI_EG1_INT_MOD_TYPE_LAST_ITEM 1
+#define HEM_EG_UI_EG2_INT_MOD_TYPE_FIRST_ITEM 0
+#define HEM_EG_UI_EG2_INT_MOD_TYPE_LAST_ITEM 1
+
+#define HEM_EG_UI_EG1_INT_GATE_DELAY_FIRST_ITEM 0
+#define HEM_EG_UI_EG1_INT_GATE_DELAY_LAST_ITEM 1
+#define HEM_EG_UI_EG2_INT_GATE_DELAY_FIRST_ITEM 0
+#define HEM_EG_UI_EG2_INT_GATE_DELAY_LAST_ITEM 1
+
+#define HEM_EG_UI_EG1_INT_GATE_DELAY_FIRST_PARAM 0
+#define HEM_EG_UI_EG1_INT_GATE_DELAY_LAST_PARAM 2
+#define HEM_EG_UI_EG1_INT_GATE_DELAY_MAX_STEPS 0
+#define HEM_EG_UI_EG1_INT_GATE_DELAY_LENGTH 1
+#define HEM_EG_UI_EG1_INT_GATE_DELAY_VALUE 2
+
+#define HEM_EG_UI_EG2_INT_GATE_DELAY_FIRST_PARAM 0
+#define HEM_EG_UI_EG2_INT_GATE_DELAY_LAST_PARAM 2
+#define HEM_EG_UI_EG2_INT_GATE_DELAY_MAX_STEPS 0
+#define HEM_EG_UI_EG2_INT_GATE_DELAY_LENGTH 1
+#define HEM_EG_UI_EG2_INT_GATE_DELAY_VALUE 2
+
+
 
 #define HEM_EG_UI_MAIN_MENU 0
 #define HEM_EG_UI_EG1_MENU 1
@@ -73,6 +96,12 @@
 #define HEM_EG_UI_CV2_DEST_MENU 4
 #define HEM_EG_UI_EG1_ENV_OUT_STR 5
 #define HEM_EG_UI_EG2_ENV_OUT_STR 6
+
+#define HEM_EG_UI_EG1_INT_MOD_DEST_MENU 7
+#define HEM_EG_UI_EG2_INT_MOD_DEST_MENU 8
+#define HEM_EG_UI_EG1_INT_MOD_TYPE_MENU 9
+#define HEM_EG_UI_EG2_INT_MOD_TYPE_MENU 10
+
 #define HEM_EG_UI_SCREEN_WIDTH 64
 #define HEM_EG_UI_SCREEN_HEIGHT 64
 #define HEM_EG_UI_CHAR_WIDTH 8
@@ -101,7 +130,14 @@ typedef enum{
   SUSTAIN = 2,
   RELEASE = 3,
   STRENGTH = 4
-}cvModDest_t;
+}modDest_t;
+
+//-ghostils:Internal Modulation Type:
+typedef enum {
+  GATE_DELAY = 0,
+  PROBABILITY = 1
+}intModType_t;
+
 
 class ADSREGPLUS : public HemisphereApplet {
 public:
@@ -128,9 +164,12 @@ public:
             sustain[ch] = 120;
             release[ch] = 25;          
             release_mod[ch] = 0;
+            curIntModDestType[ch] = 0;
+            egGateCount[ch] = 0;
+            curIntAmpStr[ch] = 0;
 
             //-ghostils:Default Envelope Output to 100% on each channel, allow user to scale as needed:
-            curCVAMPStr[ch] = 100;
+            curCVAmpStr[ch] = 100;
         }
 
         //-ghostils:Multiple ADSR Envelope Tracking:
@@ -144,18 +183,45 @@ public:
         curCV1ModDestItem = 0;
         curCV2ModDest = 0;
         curCV2ModDestItem = 0;
+        eg1IntGatedDelayEditPress = false;
+        eg1IntProbEditPress = false;
+        eg2IntGatedDelayEditPress = false;
+        eg2IntProbEditPress = false;       
         
         //-ghostils: Init mod destination values: 
         for(int i = 0; i < 2; i++){
           for(int j = 0; j < 5; j++){
-              cvModDestVal[i][j] = 0;                                 
+              cvModDestVal[i][j] = 0;
+              intModDestVal[i][j] = 0;
           }
         }
-
+        
         cv1 = 0;
         cv2 = 0;
 
-        
+        curEG1IntModDest = 0;
+        curEG1IntModDestItem = 0;
+        curEG1IntModDestSubItem = 0;
+        curEG1IntModDestType = 0;    
+        eg1IntDelayGateMaxSteps = 0;            
+        eg1IntDelayGateStepLength = 0;
+        eg1IntDelayGateModValue = 0;  
+        eg1IntDelayGateModActive = false;
+        eg1IntProbGateMaxSteps = 0;                                  
+        curEG1IntGatedDelayItem = -1;
+        curEG1IntProbItem = -1;
+
+        curEG2IntModDest = 0;
+        curEG2IntModDestItem = 0;
+        curEG2IntModDestSubItem = 0;
+        curEG2IntModDestType = 0;
+        curEG2IntGatedDelayItem = -1;
+        curEG2IntProbItem = -1;
+        eg2IntProbGateMaxSteps = 0;        
+        eg2IntDelayGateMaxSteps = 0;
+        eg2IntDelayGateStepLength = 0;
+        eg2IntDelayGateModValue = 0;
+        eg2IntDelayGateModActive = false;  
     }
 
     void Controller() {            
@@ -175,8 +241,12 @@ public:
 
         ForEachChannel(ch)
         {
-            if (Gate(ch)) {
-                if (!gated[ch]) { // The gate wasn't on last time, so this is a newly-gated EG
+            if (Gate(ch)) {                               
+                if (!gated[ch]) { // The gate wasn't on last time, so this is a newly-gated EG   
+                                                   
+                    //-ghostils: Advance gate count for Gated / Probability modulation:                    
+                    egGateCount[ch]++;
+                    
                     stage_ticks[ch] = 0;
                     if (stage[ch] != HEM_EG_RELEASE) amplitude[ch] = 0;
                     stage[ch] = HEM_EG_ATTACK;
@@ -200,14 +270,50 @@ public:
                 }
                 gated[ch] = 0;
             }
+
+
+            //-ghostils:EG1 GATED Delay modulation: intModDestVal[ch][curEG1IntModDest]
+            if(eg1IntDelayGateMaxSteps != 0 && egGateCount[0] >= eg1IntDelayGateMaxSteps){
+              egGateCount[0] = 0;
+              eg1IntDelayGateModActive = true;              
+            }else{
+              eg1IntDelayGateModActive = false;
+              
+            }
+
+            //-ghostils:Apply EG1 Modulation value over X steps:            
+            if(egGateCount[0] <= eg1IntDelayGateStepLength && eg1IntDelayGateModActive == true){
+              intModDestVal[0][curEG1IntModDestItem] = eg1IntDelayGateModValue;
+            } else if(egGateCount[0] >= eg1IntDelayGateStepLength){
+              intModDestVal[0][curEG1IntModDestItem] = 0;
+              eg1IntDelayGateModActive = false;
+            }
+
+            //-ghostils:EG2 GATED Delay modulation: intModDestVal[ch][curEG1IntModDest]
+            if(eg2IntDelayGateMaxSteps != 0 && egGateCount[1] >= eg2IntDelayGateMaxSteps){
+              egGateCount[1] = 0;
+              eg2IntDelayGateModActive = true;              
+            }else{
+              eg2IntDelayGateModActive = false;
+              
+            }
+
+            //-ghostils:Apply EG2 Modulation value over X steps:            
+            if(egGateCount[1] <= eg2IntDelayGateStepLength && eg2IntDelayGateModActive == true){
+              intModDestVal[1][curEG2IntModDestItem] = eg2IntDelayGateModValue;
+            } else if(egGateCount[1] >= eg2IntDelayGateStepLength){
+              intModDestVal[1][curEG2IntModDestItem] = 0;
+              eg2IntDelayGateModActive = false;
+            }
+
+            
+                                             
                       
             //-ghostils:Attenuate/Proportion Output based on EG strength value: Lock to 0 - MAX CV add any modulation from CV and internal
             //Out(ch, GetAmplitudeOf(ch));                               
-            int signal = Proportion(GetAmplitudeOf(ch),100,curCVAMPStr[ch] + cvModDestVal[ch][STRENGTH]);                                    
+            int signal = Proportion(GetAmplitudeOf(ch),100,curCVAmpStr[ch] + cvModDestVal[ch][STRENGTH] + intModDestVal[ch][STRENGTH]);                                    
             Out(ch,constrain(signal,0,HEMISPHERE_MAX_CV));
-            
-            
-           
+                                  
         }
 
 
@@ -247,6 +353,25 @@ public:
             DrawCV2ModDestMenu();
           break;
 
+          
+          case HEM_EG_UI_EG1_INT_MOD_DEST_MENU: 
+            DrawMainMenu();
+            DrawIntEG1ModDestMenu();
+          break;
+
+          case HEM_EG_UI_EG1_INT_MOD_TYPE_MENU:            
+            DrawIntEG1ModTypeMenu();
+          break;
+
+          case HEM_EG_UI_EG2_INT_MOD_DEST_MENU: 
+            DrawMainMenu();
+            DrawIntEG2ModDestMenu();
+          break;
+
+          case HEM_EG_UI_EG2_INT_MOD_TYPE_MENU:            
+            DrawIntEG2ModTypeMenu();
+          break;
+          
           case HEM_EG_UI_EG1_ENV_OUT_STR:
             DrawMainMenu();
             DrawEG1OutStrMenu();
@@ -268,7 +393,62 @@ public:
 
      //-ghostils:If we are pressing buttons we are not timing out reset the timer:
      curMenuTimeOutTicks = 0;
-     
+
+
+     //-ghostils: EG1 Mod Type Sub Menu:
+        if(curMenu == HEM_EG_UI_EG1_INT_MOD_TYPE_MENU){
+          switch(curEG1IntModDestSubItem){
+
+            case GATE_DELAY:
+              curEG1IntProbItem = -1;
+              eg1IntGatedDelayEditPress = true;
+              curIntModDestType[0] = GATE_DELAY;
+              if(curEG1IntGatedDelayItem == -1){
+                curEG1IntGatedDelayItem = HEM_EG_UI_EG1_INT_GATE_DELAY_FIRST_PARAM;
+              } else if( curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_LAST_PARAM){
+                curEG1IntGatedDelayItem = HEM_EG_UI_EG1_INT_GATE_DELAY_FIRST_PARAM;
+              }else {
+                curEG1IntGatedDelayItem++;
+              }
+            break;
+
+            case PROBABILITY:
+              curEG1IntGatedDelayItem = -1;
+              curIntModDestType[0] = PROBABILITY;
+            break;
+            
+            default:
+            break;
+          }
+        }
+        
+    //-ghostils: EG2 Mod Type Sub Menu:
+        if(curMenu == HEM_EG_UI_EG2_INT_MOD_TYPE_MENU){
+          switch(curEG2IntModDestSubItem){
+
+            case GATE_DELAY:
+              curEG2IntProbItem = -1;
+              eg2IntGatedDelayEditPress = true;
+              curIntModDestType[1] = GATE_DELAY;
+              if(curEG2IntGatedDelayItem == -1){
+                curEG2IntGatedDelayItem = HEM_EG_UI_EG2_INT_GATE_DELAY_FIRST_PARAM;
+              } else if( curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_LAST_PARAM){
+                curEG2IntGatedDelayItem = HEM_EG_UI_EG2_INT_GATE_DELAY_FIRST_PARAM;
+              }else {
+                curEG2IntGatedDelayItem++;
+              }
+            break;
+
+            case PROBABILITY:
+              curEG2IntGatedDelayItem = -1;
+              curIntModDestType[1] = PROBABILITY;
+            break;
+            
+            default:
+            break;
+          }
+        }    
+        
     //-ghostils: Menu selection:
     if(curMenu == HEM_EG_UI_MAIN_MENU){
       switch(curMenuItem){
@@ -292,6 +472,28 @@ public:
           curMenu = HEM_EG_UI_CV2_DEST_MENU;
         break;
 
+        case EG1_GateTriggered_Mod_Dest:
+          curMenu = HEM_EG_UI_EG1_INT_MOD_DEST_MENU;
+        break;
+
+        case EG2_GateTriggered_Mod_Dest:
+          curMenu = HEM_EG_UI_EG2_INT_MOD_DEST_MENU;
+        break;
+
+        case EG1_GateTriggered_Mod_Type:
+          curMenu = HEM_EG_UI_EG1_INT_MOD_TYPE_MENU;
+          //-ghostils: Always set the value of the 1st item and ensure we are NOT in sub item edit mode:
+          curEG1IntGatedDelayItem = -1;
+          eg1IntGatedDelayEditPress = false;         
+        break;
+
+        case EG2_GateTriggered_Mod_Type:
+          curMenu = HEM_EG_UI_EG2_INT_MOD_TYPE_MENU;
+          //-ghostils: Always set the value of the 1st item and ensure we are NOT in sub item edit mode:
+          curEG2IntGatedDelayItem = -1;
+          eg2IntGatedDelayEditPress = false;         
+        break;
+    
         case EG1_Env_Out_Strength: 
           curMenu = HEM_EG_UI_EG1_ENV_OUT_STR;
         break;
@@ -304,6 +506,10 @@ public:
           curMenu = HEM_EG_UI_MAIN_MENU;
           break;
         }
+
+        
+
+        
         //-ghostils:Return after switch selection we don't want to impact other clicks if set immediately we may add a click to other down stream items here:
         return;
     }
@@ -317,6 +523,7 @@ public:
      
     }
 
+    //-ghostils:OMG FIX THIS STUPID SHIT (after it all works though =D)
     void OnEncoderMove(int direction) {
         //-ghostils:If we are twiddling knobs we are not timing out reset the timer
         curMenuTimeOutTicks = 0;                
@@ -397,32 +604,230 @@ public:
 
         //-ghostils:EG1 Amp Output Strength:
         if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG1_ENV_OUT_STR){
-          if(curCVAMPStr[0] >= 100){           
-            curCVAMPStr[0] = 0;
+          if(curCVAmpStr[0] >= 100){           
+            curCVAmpStr[0] = 0;
           }else{
-            curCVAMPStr[0]++;            
+            curCVAmpStr[0]++;            
           }                      
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG1_ENV_OUT_STR) {
-          if(curCVAMPStr[0] <= 0){
-            curCVAMPStr[0] = 100;
+          if(curCVAmpStr[0] <= 0){
+            curCVAmpStr[0] = 100;
           }else{
-            curCVAMPStr[0]--;
+            curCVAmpStr[0]--;
           }             
         }
        
         //-ghostils:EG2 Amp Output Strength:
         if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG2_ENV_OUT_STR){
-          if(curCVAMPStr[1] >= 100){           
-            curCVAMPStr[1] = 0;
+          if(curCVAmpStr[1] >= 100){           
+            curCVAmpStr[1] = 0;
           }else{
-            curCVAMPStr[1]++;            
+            curCVAmpStr[1]++;            
           }                      
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG2_ENV_OUT_STR) {
-          if(curCVAMPStr[1] <= 0){
-            curCVAMPStr[1] = 100;
+          if(curCVAmpStr[1] <= 0){
+            curCVAmpStr[1] = 100;
           }else{
-            curCVAMPStr[1]--;
+            curCVAmpStr[1]--;
           }             
+        }
+
+
+        //-ghostils:Internal Mod Destination EG1
+        if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG1_INT_MOD_DEST_MENU){
+          if(curEG1IntModDestItem == HEM_EG_UI_LAST_CV_MOD_DEST_ITEM){
+            curEG1IntModDestItem = HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM;
+            //-ghostils:clear existing destination before setting new:
+            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}            
+          }else{
+            curEG1IntModDestItem++;
+            //-ghostils:clear existing destination before setting new:
+            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}            
+          }
+                       
+        } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG1_INT_MOD_DEST_MENU) {
+          if(curEG1IntModDestItem == HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM){
+            //-ghostils:clear existing destination before setting new:
+            curEG1IntModDestItem = HEM_EG_UI_LAST_CV_MOD_DEST_ITEM;
+            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}                       
+          }else{
+            curEG1IntModDestItem--;
+            //-ghostils:clear existing destination before setting new:
+            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}            
+          }             
+        }
+
+
+        //-ghostils:Internal Mod Destination EG2
+        if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG2_INT_MOD_DEST_MENU){
+          if(curEG2IntModDestItem == HEM_EG_UI_LAST_CV_MOD_DEST_ITEM){
+            curEG2IntModDestItem = HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM;
+            //-ghostils:clear existing destination before setting new:
+            for(int i = 0; i < 5; i++) {intModDestVal[1][i] = 0;}            
+          }else{
+            curEG2IntModDestItem++;
+            //-ghostils:clear existing destination before setting new:
+            for(int i = 0; i < 5; i++) {intModDestVal[1][i] = 0;}            
+          }
+                       
+        } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG2_INT_MOD_DEST_MENU) {
+          if(curEG2IntModDestItem == HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM){
+            //-ghostils:clear existing destination before setting new:
+            curEG2IntModDestItem = HEM_EG_UI_LAST_CV_MOD_DEST_ITEM;
+            for(int i = 0; i < 5; i++) {intModDestVal[1][i] = 0;}                       
+          }else{
+            curEG2IntModDestItem--;
+            //-ghostils:clear existing destination before setting new:
+            for(int i = 0; i < 5; i++) {intModDestVal[1][i] = 0;}            
+          }             
+        }
+        
+
+        //-ghostils:Internal Mod Type Sub Menu: EG1
+        if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG1_INT_MOD_TYPE_MENU){
+          if(eg1IntGatedDelayEditPress == false){
+            if(curEG1IntModDestSubItem == HEM_EG_UI_EG1_INT_MOD_TYPE_LAST_ITEM){
+              curEG1IntModDestSubItem = HEM_EG_UI_EG1_INT_MOD_TYPE_FIRST_ITEM;                        
+            }else{
+              curEG1IntModDestSubItem++;
+            }
+          //-ghostils: Set Mod TYPE Sub Parameter Optiosn:
+          } else {
+            
+            if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_MAX_STEPS) {
+              if(eg1IntDelayGateMaxSteps >= 128){
+                eg1IntDelayGateMaxSteps = 0;
+              } else {
+                eg1IntDelayGateMaxSteps++;
+              }
+            }
+
+            if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_LENGTH) {
+              if(eg1IntDelayGateStepLength >= eg1IntDelayGateMaxSteps){
+                //-This should always be atleast one step:
+                eg1IntDelayGateStepLength = 0;
+              } else {
+                eg1IntDelayGateStepLength++;
+              }
+            }
+
+            if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_VALUE) {
+              if(eg1IntDelayGateModValue >= 100){
+                eg1IntDelayGateModValue = 0;
+              } else {
+                eg1IntDelayGateModValue++;
+              }
+            }
+          }
+                                
+        } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG1_INT_MOD_TYPE_MENU) {
+          if(eg1IntGatedDelayEditPress == false) {
+            if(curEG1IntModDestSubItem== HEM_EG_UI_EG1_INT_MOD_TYPE_FIRST_ITEM){
+              //-ghostils:clear existing destination before setting new:
+              curEG1IntModDestSubItem = HEM_EG_UI_EG1_INT_MOD_TYPE_LAST_ITEM;              
+            }else{
+              curEG1IntModDestSubItem--;                       
+            }             
+          } else {
+            
+            if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_MAX_STEPS) {
+              if(eg1IntDelayGateMaxSteps <= 0){
+                eg1IntDelayGateMaxSteps = 128;
+              } else {
+                eg1IntDelayGateMaxSteps--;
+              }
+            }
+
+            if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_LENGTH) {
+              if(eg1IntDelayGateStepLength <= 0){
+                eg1IntDelayGateStepLength = eg1IntDelayGateMaxSteps;
+              } else {
+                eg1IntDelayGateStepLength--;
+              }
+            }
+
+            if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_VALUE) {
+              if(eg1IntDelayGateModValue <= 0){
+                eg1IntDelayGateModValue = 100;
+              } else {
+                eg1IntDelayGateModValue--;
+              }
+            }
+          }
+        }
+
+
+        //-ghostils:Internal Mod Type Sub Menu: EG2
+        if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG2_INT_MOD_TYPE_MENU){
+          if(eg2IntGatedDelayEditPress == false){
+            if(curEG2IntModDestSubItem == HEM_EG_UI_EG2_INT_MOD_TYPE_LAST_ITEM){
+              curEG2IntModDestSubItem = HEM_EG_UI_EG2_INT_MOD_TYPE_FIRST_ITEM;                        
+            }else{
+              curEG2IntModDestSubItem++;
+            }
+          //-ghostils: Set Mod TYPE Sub Parameter Optiosn:
+          } else {
+            
+            if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_MAX_STEPS) {
+              if(eg2IntDelayGateMaxSteps >= 128){
+                eg2IntDelayGateMaxSteps = 0;
+              } else {
+                eg2IntDelayGateMaxSteps++;
+              }
+            }
+
+            if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_LENGTH) {
+              if(eg2IntDelayGateStepLength >= eg2IntDelayGateMaxSteps){
+                //-This should always be atleast one step:
+                eg2IntDelayGateStepLength = 0;
+              } else {
+                eg2IntDelayGateStepLength++;
+              }
+            }
+
+            if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_VALUE) {
+              if(eg2IntDelayGateModValue >= 100){
+                eg2IntDelayGateModValue = 0;
+              } else {
+                eg2IntDelayGateModValue++;
+              }
+            }
+          }
+                                
+        } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG2_INT_MOD_TYPE_MENU) {
+          if(eg2IntGatedDelayEditPress == false) {
+            if(curEG2IntModDestSubItem== HEM_EG_UI_EG2_INT_MOD_TYPE_FIRST_ITEM){
+              //-ghostils:clear existing destination before setting new:
+              curEG2IntModDestSubItem = HEM_EG_UI_EG2_INT_MOD_TYPE_LAST_ITEM;              
+            }else{
+              curEG2IntModDestSubItem--;                       
+            }             
+          } else {
+            
+            if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_MAX_STEPS) {
+              if(eg2IntDelayGateMaxSteps <= 0){
+                eg2IntDelayGateMaxSteps = 128;
+              } else {
+                eg2IntDelayGateMaxSteps--;
+              }
+            }
+
+            if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_LENGTH) {
+              if(eg2IntDelayGateStepLength <= 0){
+                eg2IntDelayGateStepLength = eg2IntDelayGateMaxSteps;
+              } else {
+                eg2IntDelayGateStepLength--;
+              }
+            }
+
+            if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_VALUE) {
+              if(eg2IntDelayGateModValue <= 0){
+                eg1IntDelayGateModValue = 100;
+              } else {
+                eg2IntDelayGateModValue--;
+              }
+            }
+          }
         }
     }
 
@@ -475,9 +880,12 @@ private:
     
     int attack_mod; // Modification to attack from CV1    
     int release_mod[2]; // Modification to release from CV2
+    
+    //-ghostils:
     int cv1;
     int cv2;
     int cvModDestVal[2][5];
+    int intModDestVal[2][5];
     
     //-ghostils:Additions for tracking multiple ADSR's in each Hemisphere:
     int curEG;
@@ -491,13 +899,64 @@ private:
     int menuX[10] = {0,0,0,0,0,38,38,38,38,38}; 
     int menuY[10] = {14,22,30,38,46,14,22,30,38,46}; 
 
+    int eg1ModTypeMenuX[2] = {0,0};
+    int eg1ModTypeMenuY[2] = {14,22};
+    int eg2ModTypeMenuX[2] = {0,0};
+    int eg2ModTypeMenuY[2] = {14,22};
+
+    int eg1ModTypePropertyMenuX[3] = {0,0,0};
+    int eg1ModTypePropertyMenuY[3] = {38,46,54};
+    int eg2ModTypePropertyMenuX[3] = {0,0,0};
+    int eg2ModTypePropertyMenuY[3] = {38,46,54};
+
+   
+    
+    //-ghostils:CV Modulation:
     char *curCVModDestStr[5] = {"ATK","DEC","SUS","REL","STR"};
     int curCV1ModDest;
     int curCV1ModDestItem;
     int curCV2ModDest;
     int curCV2ModDestItem;
-    int curCVAMPStr[2];
-    cvModDest_t cvModDest;
+    int curCVAmpStr[2];
+    modDest_t modDest;
+
+    //-ghostils:Internal modulation:
+    intModType_t intModType;
+    int egGateCount[2];    
+    char *curIntModDestStr[5] = {"ATK","DEC","SUS","REL","STR"};
+    char *curIntModDestTypeStr[2] = {"DLY","PRB"};
+    int curIntModDestType[2];
+    
+    int curEG1IntModDest;
+    int curEG1IntModDestItem;
+    int curEG1IntModDestSubItem;
+    int curEG1IntModDestType;
+    int curEG1IntGatedDelayItem;
+    int curEG1IntProbItem;
+    int eg1IntProbGateMaxSteps;
+    bool eg1IntGatedDelayEditPress;
+    bool eg1IntProbEditPress;       
+    int eg1IntDelayGateMaxSteps;
+    int eg1IntDelayGateStepLength;
+    int eg1IntDelayGateModValue;
+    bool eg1IntDelayGateModActive;    
+    
+    
+    int curEG2IntModDest;
+    int curEG2IntModDestItem;
+    int curEG2IntModDestSubItem;
+    int curEG2IntModDestType;
+    int curEG2IntGatedDelayItem;
+    int curEG2IntProbItem;
+    int eg2IntProbGateMaxSteps;
+    bool eg2IntGatedDelayEditPress;
+    bool eg2IntProbEditPress;       
+    int eg2IntDelayGateMaxSteps;
+    int eg2IntDelayGateStepLength;
+    int eg2IntDelayGateModValue;
+    bool eg2IntDelayGateModActive;    
+       
+    int curIntAmpStr[2];
     
      
     // Stage management
@@ -585,7 +1044,9 @@ private:
       gfxPrint(38,30,"MOD");
       gfxPrint(38,38,"TYP");
       gfxPrint(38,46,"STR");
-      //gfxPrint(38,54,"");
+
+      //-ghostils: REMOVE ONCE TESTED FOR INT MOD:
+      //gfxPrint(0,54,egGateCount[1]);
 
       //-Center divider:
       gfxLine(28,14,28,54);
@@ -611,17 +1072,85 @@ private:
 
     void DrawEG1OutStrMenu(){            
       //-ghostils:Draw CV Mod Destination String:
-      gfxPrint(0,54,curCVAMPStr[0]);                  
-      //-ghostils:Highlight CV1 Mod Destintation Value:     
+      gfxPrint(0,54,curCVAmpStr[0]);                  
+      //-ghostils:Highlight CV1 Output Strength Value
       gfxInvert(0,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
     }
     
     void DrawEG2OutStrMenu(){            
       //-ghostils:Draw CV Mod Destination String:
-      gfxPrint(38,54,curCVAMPStr[1]);            
-      //-ghostils:Highlight CV1 Mod Destintation Value:     
+      gfxPrint(38,54,curCVAmpStr[1]);            
+      //-ghostils:Highlight CV1 Output Strength Value
       gfxInvert(38,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
     }
+
+    void DrawIntEG1ModDestMenu(){            
+      //-ghostils:Draw CV Mod Destination String:
+      gfxPrint(0,54,curIntModDestStr[curEG1IntModDestItem]);            
+      //-ghostils:Highlight Int EG1 Mod Destintation Value:     
+      gfxInvert(0,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+    }
+
+    void DrawIntEG2ModDestMenu(){            
+      //-ghostils:Draw CV Mod Destination String:
+      gfxPrint(38,54,curIntModDestStr[curEG2IntModDestItem]);            
+      //-ghostils:Highlight Int EG2 Mod Destintation Value:     
+      gfxInvert(38,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+    }
+    
+    void DrawIntEG1ModTypeMenu(){            
+      //-ghostils:Draw CV Mod Destination String:            
+      gfxPrint(0,14,"DLY");
+      gfxPrint(0,22,"PRB");
+      gfxInvert(eg1ModTypeMenuX[curEG1IntModDestSubItem],eg1ModTypeMenuY[curEG1IntModDestSubItem],HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+
+      if(curIntModDestType[0] == GATE_DELAY){
+        gfxLine(0,34,64,34);
+        gfxPrint(0,38,"STP");gfxPrint(38,38,eg1IntDelayGateMaxSteps);
+        gfxPrint(0,46,"LEN");gfxPrint(38,46,eg1IntDelayGateStepLength);
+        gfxPrint(0,54,"VAL");gfxPrint(38,54,eg1IntDelayGateModValue);
+        if(curEG1IntGatedDelayItem != -1){
+          gfxInvert(eg1ModTypePropertyMenuX[curEG1IntGatedDelayItem],eg1ModTypePropertyMenuY[curEG1IntGatedDelayItem],HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+        }
+        
+      }else if(curIntModDestType[0] == PROBABILITY){
+        gfxLine(0,34,64,34);
+        gfxPrint(0,38,"PER");
+        gfxPrint(0,46,"LEN");
+        gfxPrint(0,54,"VAL");
+        
+      }
+      
+      //-ghostils:Highlight Int EG1 Mod Destintation Value:     
+      //gfxInvert(0,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);                      
+    }
+
+    void DrawIntEG2ModTypeMenu(){            
+      //-ghostils:Draw CV Mod Destination String:            
+      gfxPrint(0,14,"DLY");
+      gfxPrint(0,22,"PRB");
+      gfxInvert(eg2ModTypeMenuX[curEG2IntModDestSubItem],eg2ModTypeMenuY[curEG2IntModDestSubItem],HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+
+      if(curIntModDestType[1] == GATE_DELAY){
+        gfxLine(0,34,64,34);
+        gfxPrint(0,38,"STP");gfxPrint(38,38,eg2IntDelayGateMaxSteps);
+        gfxPrint(0,46,"LEN");gfxPrint(38,46,eg2IntDelayGateStepLength);
+        gfxPrint(0,54,"VAL");gfxPrint(38,54,eg2IntDelayGateModValue);
+        if(curEG2IntGatedDelayItem != -1){
+          gfxInvert(eg2ModTypePropertyMenuX[curEG2IntGatedDelayItem],eg2ModTypePropertyMenuY[curEG2IntGatedDelayItem],HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+        }
+        
+      }else if(curIntModDestType[1] == PROBABILITY){
+        gfxLine(0,34,64,34);
+        gfxPrint(0,38,"PER");
+        gfxPrint(0,46,"LEN");
+        gfxPrint(0,54,"VAL");        
+      }
+      
+      //-ghostils:Highlight Int EG1 Mod Destintation Value:     
+      //gfxInvert(0,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);                      
+    }
+    
 
 
 
@@ -630,7 +1159,7 @@ private:
         //-Remove attack_mod CV:
         //int effective_attack = constrain(attack[ch] + attack_mod, 1, HEM_EG_MAX_VALUE);
         //int effective_attack = constrain(attack[ch], 1, HEM_EG_MAX_VALUE);
-        int effective_attack = constrain(attack[ch] + cvModDestVal[ch][ATTACK], 1, HEM_EG_MAX_VALUE);
+        int effective_attack = constrain(attack[ch] + cvModDestVal[ch][ATTACK] + intModDestVal[ch][ATTACK], 1, HEM_EG_MAX_VALUE);
         int total_stage_ticks = Proportion(effective_attack, HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
         if (effective_attack == 1) ticks_remaining = 0;
@@ -648,7 +1177,7 @@ private:
     void DecayAmplitude(int ch) {
         //-ghostils:Update to reference current channel:
         //int total_stage_ticks = Proportion(decay[ch], HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
-        int total_stage_ticks = Proportion(decay[ch] + cvModDestVal[ch][DECAY], HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
+        int total_stage_ticks = Proportion(decay[ch] + cvModDestVal[ch][DECAY] + intModDestVal[ch][DECAY], HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
         simfloat amplitude_remaining = amplitude[ch] - int2simfloat(Proportion(sustain[ch], HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
         if (sustain[ch] == 1) ticks_remaining = 0;
@@ -665,14 +1194,14 @@ private:
     void SustainAmplitude(int ch) {
         //-ghostils:Update to reference current channel:cvModDestVal[ch][ATTACK]
         //amplitude[ch] = int2simfloat(Proportion(sustain[ch] - 1, HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
-        amplitude[ch] = int2simfloat(Proportion((sustain[ch] + cvModDestVal[ch][SUSTAIN]) - 1, HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
+        amplitude[ch] = int2simfloat(Proportion((sustain[ch] + cvModDestVal[ch][SUSTAIN] + intModDestVal[ch][SUSTAIN]) - 1, HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
     }
 
     void ReleaseAmplitude(int ch) {
         //-ghostils:Update to reference current channel:
         //-CV1 = ADSR A release MOD, CV2 = ADSR A release MOD
         //int effective_release = constrain(release[ch] + release_mod[ch], 1, HEM_EG_MAX_VALUE) - 1;
-        int effective_release = constrain(release[ch] + cvModDestVal[ch][RELEASE], 1, HEM_EG_MAX_VALUE) - 1;
+        int effective_release = constrain(release[ch] + cvModDestVal[ch][RELEASE] + intModDestVal[ch][RELEASE], 1, HEM_EG_MAX_VALUE) - 1;
         int total_stage_ticks = Proportion(effective_release, HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_R);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
         if (effective_release == 0) ticks_remaining = 0;
@@ -690,6 +1219,12 @@ private:
         int mod = 0;
         mod = Proportion(DetentedIn(in), HEMISPHERE_MAX_CV, HEM_EG_MAX_VALUE / 2);
         return mod;
+    }
+
+
+    //-ghostils: Probability trigger: taken from HEM_Brancher.ino:
+    int getProbability(int probability){      
+      return (random(1, 100) <= probability) ? 0 : 1;
     }
 };
 
