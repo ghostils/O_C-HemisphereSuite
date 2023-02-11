@@ -18,7 +18,8 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 <ul>
   <li>Probability as the additional internal modulation source. </li> 
   <li>Support for bi-polar modulation internally</li>
-  <li>Support for Sample and Hold as an internal modulation source based on incomming CV or specific active envelop stage </li>
+  <li>Support for Sample and Hold as an internal modulation source based on incoming CV1/CV2 or specific active envelope stage for selected envelope.</li>
+  <li>Move envelope triggered UI element to main menu screen for better visibility on active triggers/gates. </li>
 </ul>
 </ul>
 
