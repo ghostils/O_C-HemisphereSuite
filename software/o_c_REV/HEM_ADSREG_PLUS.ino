@@ -733,6 +733,8 @@ public:
             if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_MAX_STEPS) {
               if(eg1IntDelayGateMaxSteps <= 0){
                 eg1IntDelayGateMaxSteps = 128;
+              } else if (eg2IntDelayGateStepLength > eg2IntDelayGateMaxSteps) {
+                eg1IntDelayGateStepLength = eg1IntDelayGateMaxSteps;
               } else {
                 eg1IntDelayGateMaxSteps--;
               }
@@ -740,7 +742,7 @@ public:
 
             if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_LENGTH) {
               if(eg1IntDelayGateStepLength <= 0){
-                eg1IntDelayGateStepLength = eg1IntDelayGateMaxSteps;
+                eg1IntDelayGateStepLength = eg1IntDelayGateMaxSteps;              
               } else {
                 eg1IntDelayGateStepLength--;
               }
@@ -796,7 +798,7 @@ public:
                                 
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG2_INT_MOD_TYPE_MENU) {
           if(eg2IntGatedDelayEditPress == false) {
-            if(curEG2IntModDestSubItem== HEM_EG_UI_EG2_INT_MOD_TYPE_FIRST_ITEM){
+            if(curEG2IntModDestSubItem == HEM_EG_UI_EG2_INT_MOD_TYPE_FIRST_ITEM){
               //-ghostils:clear existing destination before setting new:
               curEG2IntModDestSubItem = HEM_EG_UI_EG2_INT_MOD_TYPE_LAST_ITEM;              
             }else{
@@ -806,7 +808,7 @@ public:
             
             if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_MAX_STEPS) {
               if(eg2IntDelayGateMaxSteps <= 0){
-                eg2IntDelayGateMaxSteps = 128;
+                eg2IntDelayGateMaxSteps = 128;              
               } else {
                 eg2IntDelayGateMaxSteps--;
               }
@@ -814,7 +816,7 @@ public:
 
             if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_LENGTH) {
               if(eg2IntDelayGateStepLength <= 0){
-                eg2IntDelayGateStepLength = eg2IntDelayGateMaxSteps;
+                eg2IntDelayGateStepLength = eg2IntDelayGateMaxSteps;              
               } else {
                 eg2IntDelayGateStepLength--;
               }
