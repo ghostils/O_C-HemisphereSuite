@@ -375,10 +375,7 @@ public:
                 case HEM_EG_UI_EG1_INT_PROB_TYPE_RND:
                   //-ghostils: If the static modulation value is not zero, we can use this to set a ceiling on the random modulation value:
                   if(eg1IntProbGateModValue !=0){
-                    intModProbDestVal[0][curEG1IntModDestItem] = random(1,eg1IntProbGateModValue);
-                  //ghostils:No? Beat the devil out of it then:
-                  }else{
-                    intModProbDestVal[0][curEG1IntModDestItem] = random(1,100);
+                    intModProbDestVal[0][curEG1IntModDestItem] = random(1,eg1IntProbGateModValue);                  
                   }
                 break;
 
@@ -404,10 +401,7 @@ public:
                 case HEM_EG_UI_EG2_INT_PROB_TYPE_RND:
                   //-ghostils: If the static modulation value is not zero, we can use this to set a ceiling on the random modulation value:
                   if(eg2IntProbGateModValue !=0){
-                    intModProbDestVal[1][curEG2IntModDestItem] = random(1,eg2IntProbGateModValue);
-                  //ghostils:No? Beat the devil out of it then:
-                  }else{
-                    intModProbDestVal[1][curEG2IntModDestItem] = random(1,100);
+                    intModProbDestVal[1][curEG2IntModDestItem] = random(1,eg2IntProbGateModValue);                  
                   }
                 break;
 
