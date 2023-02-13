@@ -15,7 +15,7 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 <li> EG1/EG2 probability functional. Supports static value triggered on probability threshold, random value, and sample and hold based on CV1/CV2. Sample and hold replaces external CV modualtion for selected CV input. </li>  
 <li> TODO: </li> 
 <ul>  
-  <li>Support for independent internal modulation destinations </li> 
+  <li>Support for independent internal modulation destinations. </li> 
   <li>Support for bi-polar modulation internally.</li>  
   <li>Move envelope triggered UI element to main menu screen for better visibility on active triggers/gates. </li>
 </ul>
