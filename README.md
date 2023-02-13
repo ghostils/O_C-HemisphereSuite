@@ -10,6 +10,19 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 -ghostils
 
 ### updates:
+2/10/2023 - HEM_ADSREGPLUS.ino
+<ul>
+<li> EG1/EG2 added internal modulation destination Attack,Decay Sustain,Release,Envelope output strength. </li> 
+<li> Positive modulation supported by clock sub division over steps equal to the max clock divisor or lower, ie divide by 2 and you can apply x static modulation value for up to 2 steps. </li> 
+<li> TODO: </li> 
+<ul>
+  <li>Probability as the additional internal modulation source. </li> 
+  <li>Support for bi-polar modulation internally.</li>
+  <li>Support for Sample and Hold as an internal modulation source based on random value, incoming CV1/CV2 or specific active envelope stage value for selected envelope.</li>
+  <li>Move envelope triggered UI element to main menu screen for better visibility on active triggers/gates. </li>
+</ul>
+</ul>
+
 2/7/2023 - HEM_ADSREGPLUS.ino
 <ul>
 <li> Added simple one page menu for EG1/EG2, press encoder on item to edit item in place. Timeout timer returns you to main menu for ALL sub menus/items after value is set. Moving or clicking encoder will reset timeout timer so you may continue editing a parameter.</li>
