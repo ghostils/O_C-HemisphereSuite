@@ -10,6 +10,16 @@ Hemisphere Suite: Alternate-Alternate Firmware for Ornament and Crime
 -ghostils
 
 ### updates:
+2/12/2023 - HEM_ADSREGPLUS.ino
+<ul>
+<li> EG1/EG2 probability functional. Supports static value triggered on probability threshold, random value, and sample and hold based on CV1/CV2. Sample and hold replaces external CV modualtion for selected CV. </li>  
+<li> TODO: </li> 
+<ul>  
+  <li>Support for bi-polar modulation internally.</li>  
+  <li>Move envelope triggered UI element to main menu screen for better visibility on active triggers/gates. </li>
+</ul>
+</ul>
+
 2/10/2023 - HEM_ADSREGPLUS.ino
 <ul>
 <li> EG1/EG2 added internal modulation destination Attack,Decay Sustain,Release,Envelope output strength. </li> 
