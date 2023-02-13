@@ -39,6 +39,8 @@
   
   
 */
+#include <stdlib.h>
+
 
 #define HEM_EG_ATTACK 0
 #define HEM_EG_DECAY 1
@@ -75,6 +77,11 @@
 #define HEM_EG_UI_EG2_INT_GATE_DELAY_FIRST_ITEM 0
 #define HEM_EG_UI_EG2_INT_GATE_DELAY_LAST_ITEM 1
 
+#define HEM_EG_UI_EG1_INT_PROB_FIRST_ITEM 0
+#define HEM_EG_UI_EG1_INT_PROB_LAST_ITEM 1
+#define HEM_EG_UI_EG2_INT_PROB_FIRST_ITEM 0
+#define HEM_EG_UI_EG2_INT_PROB_LAST_ITEM 1
+
 #define HEM_EG_UI_EG1_INT_GATE_DELAY_FIRST_PARAM 0
 #define HEM_EG_UI_EG1_INT_GATE_DELAY_LAST_PARAM 2
 #define HEM_EG_UI_EG1_INT_GATE_DELAY_MAX_STEPS 0
@@ -87,7 +94,28 @@
 #define HEM_EG_UI_EG2_INT_GATE_DELAY_LENGTH 1
 #define HEM_EG_UI_EG2_INT_GATE_DELAY_VALUE 2
 
+#define HEM_EG_UI_EG1_INT_PROB_FIRST_PARAM 0
+#define HEM_EG_UI_EG1_INT_PROB_LAST_PARAM 2
+#define HEM_EG_UI_EG1_INT_PROB_FIRST_TYPE 0
+#define HEM_EG_UI_EG1_INT_PROB_LAST_TYPE 2
+#define HEM_EG_UI_EG1_INT_PROB_TYPE_VAL 0
+#define HEM_EG_UI_EG1_INT_PROB_TYPE_RND 1
+#define HEM_EG_UI_EG1_INT_PROB_TYPE_SNH 2
+#define HEM_EG_UI_EG1_INT_PROB_PERCENT 0
+#define HEM_EG_UI_EG1_INT_PROB_TYPE 1
+#define HEM_EG_UI_EG1_INT_PROB_VALUE 2
 
+
+#define HEM_EG_UI_EG2_INT_PROB_FIRST_PARAM 0
+#define HEM_EG_UI_EG2_INT_PROB_LAST_PARAM 2
+#define HEM_EG_UI_EG2_INT_PROB_FIRST_TYPE 0
+#define HEM_EG_UI_EG2_INT_PROB_LAST_TYPE 2
+#define HEM_EG_UI_EG2_INT_PROB_TYPE_VAL 0
+#define HEM_EG_UI_EG2_INT_PROB_TYPE_RND 1
+#define HEM_EG_UI_EG2_INT_PROB_TYPE_SNH 2
+#define HEM_EG_UI_EG2_INT_PROB_PERCENT 0
+#define HEM_EG_UI_EG2_INT_PROB_TYPE 1
+#define HEM_EG_UI_EG2_INT_PROB_VALUE 2
 
 #define HEM_EG_UI_MAIN_MENU 0
 #define HEM_EG_UI_EG1_MENU 1
@@ -166,6 +194,7 @@ public:
             release_mod[ch] = 0;
             curIntModDestType[ch] = 0;
             egGateCount[ch] = 0;
+            egProbGateCount[ch] = 0;
             curIntAmpStr[ch] = 0;
 
             //-ghostils:Default Envelope Output to 100% on each channel, allow user to scale as needed:
@@ -193,6 +222,7 @@ public:
           for(int j = 0; j < 5; j++){
               cvModDestVal[i][j] = 0;
               intModDestVal[i][j] = 0;
+              intModProbDestVal[i][j] = 0;
           }
         }
         
@@ -206,22 +236,32 @@ public:
         eg1IntDelayGateMaxSteps = 0;            
         eg1IntDelayGateStepLength = 0;
         eg1IntDelayGateModValue = 0;  
-        eg1IntDelayGateModActive = false;
-        eg1IntProbGateMaxSteps = 0;                                  
+        eg1IntDelayGateModActive = false;        
         curEG1IntGatedDelayItem = -1;
         curEG1IntProbItem = -1;
+        eg1IntProbGatePercent = 0;
+        eg1IntProbGateStepLength = 0;
+        eg1IntProbGateModValue = 0;
+        eg1IntProbGateModActive = false;
+        eg1ProbTrigger = 0;
+        eg1ProbType = 0;    
 
         curEG2IntModDest = 0;
         curEG2IntModDestItem = 0;
         curEG2IntModDestSubItem = 0;
         curEG2IntModDestType = 0;
         curEG2IntGatedDelayItem = -1;
-        curEG2IntProbItem = -1;
-        eg2IntProbGateMaxSteps = 0;        
+        curEG2IntProbItem = -1;               
         eg2IntDelayGateMaxSteps = 0;
         eg2IntDelayGateStepLength = 0;
         eg2IntDelayGateModValue = 0;
         eg2IntDelayGateModActive = false;  
+        eg2IntProbGatePercent = 0;
+        eg2IntProbGateStepLength = 0;
+        eg2IntProbGateModValue = 0;
+        eg2IntProbGateModActive = false;
+        eg2ProbTrigger = 0;
+        eg2ProbType = 0;
     }
 
     void Controller() {            
@@ -235,9 +275,20 @@ public:
         cv1 = get_modification_with_input(0);
         cv2 = get_modification_with_input(1);
 
-        //-ghostils: CV Destitinations:
-        cvModDestVal[0][curCV1ModDestItem] = cv1;
-        cvModDestVal[1][curCV2ModDestItem] = cv2;
+        //-ghostils: CV Destitinations:               
+        //-ghostils:If we are using Probability and SNH break the connection to this mod destination and use the CV source for sample and hold:
+        if(eg1ProbType != HEM_EG_UI_EG1_INT_PROB_TYPE_SNH){
+          cvModDestVal[0][curCV1ModDestItem] = cv1;
+        }else{
+          cvModDestVal[0][curCV1ModDestItem] = 0;
+        }
+        if(eg2ProbType != HEM_EG_UI_EG2_INT_PROB_TYPE_SNH){
+         cvModDestVal[1][curCV2ModDestItem] = cv2;
+        }else{
+          cvModDestVal[1][curCV2ModDestItem] = 0;
+        }
+        
+        
 
         ForEachChannel(ch)
         {
@@ -246,6 +297,10 @@ public:
                                                    
                     //-ghostils: Advance gate count for Gated / Probability modulation:                    
                     egGateCount[ch]++;
+                    egProbGateCount[ch]++;
+                    
+                    eg1ProbTrigger = getProbability(eg1IntProbGatePercent);
+                    eg2ProbTrigger = getProbability(eg2IntProbGatePercent);
                     
                     stage_ticks[ch] = 0;
                     if (stage[ch] != HEM_EG_RELEASE) amplitude[ch] = 0;
@@ -271,7 +326,8 @@ public:
                 gated[ch] = 0;
             }
 
-
+            //-ghostils:GATED MODULATION: 
+            
             //-ghostils:EG1 GATED Delay modulation: intModDestVal[ch][curEG1IntModDest]
             if(eg1IntDelayGateMaxSteps != 0 && egGateCount[0] >= eg1IntDelayGateMaxSteps){
               egGateCount[0] = 0;
@@ -306,12 +362,70 @@ public:
               eg2IntDelayGateModActive = false;
             }
 
+
+            //-ghostils:PROBABILITY MODULATION:            
+            //-ghostils:Apply EG1 Probability based on static value "VAL" or Random "RND" using "VAL" as the ceiling or sampling the current incomming CV1 value for this gate:
+            if((egProbGateCount[0] < 1) && (eg1IntProbGatePercent == 100 || eg1ProbTrigger) && eg1IntProbGatePercent != 0){
+              switch(eg1ProbType){
+                //-ghostils:Static modulation value triggered when get a probability hit:
+                case HEM_EG_UI_EG1_INT_PROB_TYPE_VAL:
+                  intModProbDestVal[0][curEG1IntModDestItem] = eg1IntProbGateModValue;  
+                break;
+
+                case HEM_EG_UI_EG1_INT_PROB_TYPE_RND:
+                  //-ghostils: If the static modulation value is not zero, we can use this to set a ceiling on the random modulation value:
+                  if(eg1IntProbGateModValue !=0){
+                    intModProbDestVal[0][curEG1IntModDestItem] = random(1,eg1IntProbGateModValue);
+                  //ghostils:No? Beat the devil out of it then:
+                  }else{
+                    intModProbDestVal[0][curEG1IntModDestItem] = random(1,100);
+                  }
+                break;
+
+                //-Sample and hold the incomming CV value and scale between 0 and eg1IntProbGateModValue:
+                case HEM_EG_UI_EG1_INT_PROB_TYPE_SNH:
+                  intModProbDestVal[0][curEG1IntModDestItem] = constrain(cv1,0,eg1IntProbGateModValue);
+                break;                
+              }                          
+            } else if(egProbGateCount[0] > eg1IntProbGateStepLength){
+              egProbGateCount[0] = 0;
+              intModProbDestVal[0][curEG1IntModDestItem] = 0;              
+              eg1IntProbGateModActive = false;
+            }
+
+            //-ghostils:Apply EG2 Probability based on static value "VAL" or Random "RND" using "VAL" as the ceiling or sampling the current incomming CV1 value for this gate:
+            if((egProbGateCount[1] < 1) && (eg2IntProbGatePercent == 100 || eg2ProbTrigger) && eg2IntProbGatePercent != 0){
+              switch(eg2ProbType){
+                //-ghostils:Static modulation value triggered when get a probability hit:
+                case HEM_EG_UI_EG2_INT_PROB_TYPE_VAL:
+                  intModProbDestVal[1][curEG2IntModDestItem] = eg2IntProbGateModValue;  
+                break;
+
+                case HEM_EG_UI_EG2_INT_PROB_TYPE_RND:
+                  //-ghostils: If the static modulation value is not zero, we can use this to set a ceiling on the random modulation value:
+                  if(eg2IntProbGateModValue !=0){
+                    intModProbDestVal[1][curEG2IntModDestItem] = random(1,eg2IntProbGateModValue);
+                  //ghostils:No? Beat the devil out of it then:
+                  }else{
+                    intModProbDestVal[1][curEG2IntModDestItem] = random(1,100);
+                  }
+                break;
+
+                //-Sample and hold the incomming CV value and scale between 0 and eg2IntProbGateModValue:
+                case HEM_EG_UI_EG2_INT_PROB_TYPE_SNH:
+                  intModProbDestVal[1][curEG2IntModDestItem] = constrain(cv2,0,eg2IntProbGateModValue);
+                break;                
+              }                          
+            } else if(egProbGateCount[1] > eg2IntProbGateStepLength){
+              egProbGateCount[1] = 0;
+              intModProbDestVal[1][curEG2IntModDestItem] = 0;              
+              eg2IntProbGateModActive = false;
+            }
             
-                                             
                       
             //-ghostils:Attenuate/Proportion Output based on EG strength value: Lock to 0 - MAX CV add any modulation from CV and internal
             //Out(ch, GetAmplitudeOf(ch));                               
-            int signal = Proportion(GetAmplitudeOf(ch),100,curCVAmpStr[ch] + cvModDestVal[ch][STRENGTH] + intModDestVal[ch][STRENGTH]);                                    
+            int signal = Proportion(GetAmplitudeOf(ch),100,curCVAmpStr[ch] + cvModDestVal[ch][STRENGTH] + intModDestVal[ch][STRENGTH] + intModProbDestVal[ch][STRENGTH]);                                    
             Out(ch,constrain(signal,0,HEMISPHERE_MAX_CV));
                                   
         }
@@ -399,8 +513,7 @@ public:
         if(curMenu == HEM_EG_UI_EG1_INT_MOD_TYPE_MENU){
           switch(curEG1IntModDestSubItem){
 
-            case GATE_DELAY:
-              curEG1IntProbItem = -1;
+            case GATE_DELAY:              
               eg1IntGatedDelayEditPress = true;
               curIntModDestType[0] = GATE_DELAY;
               if(curEG1IntGatedDelayItem == -1){
@@ -412,9 +525,16 @@ public:
               }
             break;
 
-            case PROBABILITY:
-              curEG1IntGatedDelayItem = -1;
+            case PROBABILITY:              
+              eg1IntProbEditPress = true;
               curIntModDestType[0] = PROBABILITY;
+              if(curEG1IntProbItem == -1){
+                curEG1IntProbItem = HEM_EG_UI_EG1_INT_PROB_FIRST_PARAM;
+              } else if( curEG1IntProbItem == HEM_EG_UI_EG1_INT_PROB_LAST_PARAM){
+                curEG1IntProbItem = HEM_EG_UI_EG1_INT_PROB_FIRST_PARAM;
+              }else {
+                curEG1IntProbItem++;
+              }
             break;
             
             default:
@@ -426,8 +546,7 @@ public:
         if(curMenu == HEM_EG_UI_EG2_INT_MOD_TYPE_MENU){
           switch(curEG2IntModDestSubItem){
 
-            case GATE_DELAY:
-              curEG2IntProbItem = -1;
+            case GATE_DELAY:              
               eg2IntGatedDelayEditPress = true;
               curIntModDestType[1] = GATE_DELAY;
               if(curEG2IntGatedDelayItem == -1){
@@ -439,9 +558,16 @@ public:
               }
             break;
 
-            case PROBABILITY:
-              curEG2IntGatedDelayItem = -1;
+            case PROBABILITY:              
+              eg2IntProbEditPress = true;
               curIntModDestType[1] = PROBABILITY;
+              if(curEG2IntProbItem == -1){
+                curEG2IntProbItem = HEM_EG_UI_EG2_INT_PROB_FIRST_PARAM;
+              } else if( curEG2IntProbItem == HEM_EG_UI_EG2_INT_PROB_LAST_PARAM){
+                curEG2IntProbItem = HEM_EG_UI_EG2_INT_PROB_FIRST_PARAM;
+              }else {
+                curEG2IntProbItem++;
+              }
             break;
             
             default:
@@ -484,14 +610,18 @@ public:
           curMenu = HEM_EG_UI_EG1_INT_MOD_TYPE_MENU;
           //-ghostils: Always set the value of the 1st item and ensure we are NOT in sub item edit mode:
           curEG1IntGatedDelayItem = -1;
-          eg1IntGatedDelayEditPress = false;         
+          eg1IntGatedDelayEditPress = false;
+          curEG1IntProbItem = -1;
+          eg1IntProbEditPress = false;
         break;
 
         case EG2_GateTriggered_Mod_Type:
           curMenu = HEM_EG_UI_EG2_INT_MOD_TYPE_MENU;
           //-ghostils: Always set the value of the 1st item and ensure we are NOT in sub item edit mode:
           curEG2IntGatedDelayItem = -1;
-          eg2IntGatedDelayEditPress = false;         
+          eg2IntGatedDelayEditPress = false;
+          curEG2IntProbItem = -1;
+          eg2IntProbEditPress = false;         
         break;
     
         case EG1_Env_Out_Strength: 
@@ -507,9 +637,6 @@ public:
           break;
         }
 
-        
-
-        
         //-ghostils:Return after switch selection we don't want to impact other clicks if set immediately we may add a click to other down stream items here:
         return;
     }
@@ -638,22 +765,27 @@ public:
           if(curEG1IntModDestItem == HEM_EG_UI_LAST_CV_MOD_DEST_ITEM){
             curEG1IntModDestItem = HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}            
+            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;} 
+            for(int i = 0; i < 5; i++) {intModProbDestVal[0][i] = 0;}
+            
           }else{
             curEG1IntModDestItem++;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}            
+            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}
+            for(int i = 0; i < 5; i++) {intModProbDestVal[0][i] = 0;}
           }
                        
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG1_INT_MOD_DEST_MENU) {
           if(curEG1IntModDestItem == HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM){
             //-ghostils:clear existing destination before setting new:
             curEG1IntModDestItem = HEM_EG_UI_LAST_CV_MOD_DEST_ITEM;
-            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}                       
+            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}
+            for(int i = 0; i < 5; i++) {intModProbDestVal[0][i] = 0;}
           }else{
             curEG1IntModDestItem--;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}            
+            for(int i = 0; i < 5; i++) {intModDestVal[0][i] = 0;}
+            for(int i = 0; i < 5; i++) {intModProbDestVal[0][i] = 0;}        
           }             
         }
 
@@ -667,14 +799,16 @@ public:
           }else{
             curEG2IntModDestItem++;
             //-ghostils:clear existing destination before setting new:
-            for(int i = 0; i < 5; i++) {intModDestVal[1][i] = 0;}            
+            for(int i = 0; i < 5; i++) {intModDestVal[1][i] = 0;}
+            
           }
                        
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG2_INT_MOD_DEST_MENU) {
           if(curEG2IntModDestItem == HEM_EG_UI_FIRST_CV_MOD_DEST_ITEM){
             //-ghostils:clear existing destination before setting new:
             curEG2IntModDestItem = HEM_EG_UI_LAST_CV_MOD_DEST_ITEM;
-            for(int i = 0; i < 5; i++) {intModDestVal[1][i] = 0;}                       
+            for(int i = 0; i < 5; i++) {intModDestVal[1][i] = 0;}
+                                  
           }else{
             curEG2IntModDestItem--;
             //-ghostils:clear existing destination before setting new:
@@ -685,15 +819,14 @@ public:
 
         //-ghostils:Internal Mod Type Sub Menu: EG1
         if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG1_INT_MOD_TYPE_MENU){
-          if(eg1IntGatedDelayEditPress == false){
+          if(eg1IntGatedDelayEditPress == false && eg1IntProbEditPress == false){
             if(curEG1IntModDestSubItem == HEM_EG_UI_EG1_INT_MOD_TYPE_LAST_ITEM){
               curEG1IntModDestSubItem = HEM_EG_UI_EG1_INT_MOD_TYPE_FIRST_ITEM;                        
             }else{
               curEG1IntModDestSubItem++;
             }
-          //-ghostils: Set Mod TYPE Sub Parameter Optiosn:
-          } else {
-            
+          //-ghostils: Set Mod TYPE Sub Parameter Options for Gated Delay:
+          } else if(eg1IntGatedDelayEditPress == true) {            
             if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_MAX_STEPS) {
               if(eg1IntDelayGateMaxSteps >= 128){
                 eg1IntDelayGateMaxSteps = 0;
@@ -718,18 +851,42 @@ public:
                 eg1IntDelayGateModValue++;
               }
             }
-          }
-                                
+          //-ghostils: Set Mod TYPE sub parameter for probability:
+          } else if(eg1IntProbEditPress == true) {            
+            if (curEG1IntProbItem == HEM_EG_UI_EG1_INT_PROB_PERCENT) {
+              if(eg1IntProbGatePercent >= 100){
+                eg1IntProbGatePercent = 0;
+              } else {
+                eg1IntProbGatePercent++;
+              }
+            }
+
+            if (curEG1IntProbItem == HEM_EG_UI_EG1_INT_PROB_TYPE) {
+              if(eg1ProbType >= HEM_EG_UI_EG2_INT_PROB_LAST_PARAM){
+                //-This should always be atleast one step:
+                eg1ProbType = HEM_EG_UI_EG2_INT_PROB_FIRST_PARAM;
+              } else {
+                eg1ProbType++;
+              }
+            }
+
+            if (curEG1IntProbItem == HEM_EG_UI_EG1_INT_PROB_VALUE) {
+              if(eg1IntProbGateModValue >= 100){
+                eg1IntProbGateModValue = 0;
+              } else {
+                eg1IntProbGateModValue++;
+              }             
+            }            
+          }                               
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG1_INT_MOD_TYPE_MENU) {
-          if(eg1IntGatedDelayEditPress == false) {
+          if(eg1IntGatedDelayEditPress == false && eg1IntProbEditPress == false) {
             if(curEG1IntModDestSubItem== HEM_EG_UI_EG1_INT_MOD_TYPE_FIRST_ITEM){
               //-ghostils:clear existing destination before setting new:
               curEG1IntModDestSubItem = HEM_EG_UI_EG1_INT_MOD_TYPE_LAST_ITEM;              
             }else{
               curEG1IntModDestSubItem--;                       
             }             
-          } else {
-            
+          } else if(eg1IntGatedDelayEditPress == true) {            
             if (curEG1IntGatedDelayItem == HEM_EG_UI_EG1_INT_GATE_DELAY_MAX_STEPS) {
               if(eg1IntDelayGateMaxSteps <= 0){
                 eg1IntDelayGateMaxSteps = 128;
@@ -755,21 +912,45 @@ public:
                 eg1IntDelayGateModValue--;
               }
             }
-          }
+
+          //-ghostils: Set Mod TYPE sub parameter for probability:  
+          } else if(eg1IntProbEditPress == true) {            
+            if (curEG1IntProbItem == HEM_EG_UI_EG1_INT_PROB_PERCENT) {
+              if(eg1IntProbGatePercent <= 0){
+                eg1IntProbGatePercent = 100;
+              } else {
+                eg1IntProbGatePercent--;
+              }
+            }
+            if (curEG1IntProbItem == HEM_EG_UI_EG1_INT_PROB_TYPE) {
+              if(eg1ProbType <= HEM_EG_UI_EG1_INT_PROB_FIRST_PARAM){
+                //-This should always be atleast one step:
+                eg1ProbType = HEM_EG_UI_EG1_INT_PROB_LAST_PARAM;
+              } else {
+                eg1ProbType--;
+              }
+            }
+            if (curEG1IntProbItem == HEM_EG_UI_EG1_INT_PROB_VALUE) {
+              if(eg1IntProbGateModValue <= 0){
+                eg1IntProbGateModValue = 100;
+              } else {
+                eg1IntProbGateModValue--;
+              }
+            }            
+          }          
         }
 
 
         //-ghostils:Internal Mod Type Sub Menu: EG2
         if(direction == HEM_EG_UI_ENCODER_RIGHT && curMenu == HEM_EG_UI_EG2_INT_MOD_TYPE_MENU){
-          if(eg2IntGatedDelayEditPress == false){
+          if(eg2IntGatedDelayEditPress == false && eg2IntProbEditPress == false){
             if(curEG2IntModDestSubItem == HEM_EG_UI_EG2_INT_MOD_TYPE_LAST_ITEM){
               curEG2IntModDestSubItem = HEM_EG_UI_EG2_INT_MOD_TYPE_FIRST_ITEM;                        
             }else{
               curEG2IntModDestSubItem++;
             }
           //-ghostils: Set Mod TYPE Sub Parameter Optiosn:
-          } else {
-            
+          } else if(eg2IntGatedDelayEditPress == true) {            
             if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_MAX_STEPS) {
               if(eg2IntDelayGateMaxSteps >= 128){
                 eg2IntDelayGateMaxSteps = 0;
@@ -777,7 +958,6 @@ public:
                 eg2IntDelayGateMaxSteps++;
               }
             }
-
             if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_LENGTH) {
               if(eg2IntDelayGateStepLength >= eg2IntDelayGateMaxSteps){
                 //-This should always be atleast one step:
@@ -786,7 +966,6 @@ public:
                 eg2IntDelayGateStepLength++;
               }
             }
-
             if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_VALUE) {
               if(eg2IntDelayGateModValue >= 100){
                 eg2IntDelayGateModValue = 0;
@@ -794,18 +973,41 @@ public:
                 eg2IntDelayGateModValue++;
               }
             }
+          //-ghostils: Set Mod TYPE sub parameter for probability:  
+          } else if(eg2IntProbEditPress == true) {
+            if (curEG2IntProbItem == HEM_EG_UI_EG2_INT_PROB_PERCENT) {
+              if(eg2IntProbGatePercent >= 100){
+                eg2IntProbGatePercent = 0;
+              } else {
+                eg2IntProbGatePercent++;
+              }
+            }
+            if (curEG2IntProbItem == HEM_EG_UI_EG2_INT_PROB_TYPE) {
+              if(eg2ProbType >= HEM_EG_UI_EG2_INT_PROB_LAST_PARAM){
+                //-This should always be atleast one step:
+                eg2ProbType = HEM_EG_UI_EG2_INT_PROB_FIRST_PARAM;
+              } else {
+                eg2ProbType++;
+              }
+            }
+            if (curEG2IntProbItem == HEM_EG_UI_EG2_INT_PROB_VALUE) {
+              if(eg2IntProbGateModValue >= 100){
+                eg2IntProbGateModValue = 0;
+              } else {
+                eg2IntProbGateModValue++;
+              }             
+            }  
           }
                                 
         } else if(direction == HEM_EG_UI_ENCODER_LEFT && curMenu == HEM_EG_UI_EG2_INT_MOD_TYPE_MENU) {
-          if(eg2IntGatedDelayEditPress == false) {
+          if(eg2IntGatedDelayEditPress == false && eg2IntProbEditPress == false) {
             if(curEG2IntModDestSubItem == HEM_EG_UI_EG2_INT_MOD_TYPE_FIRST_ITEM){
               //-ghostils:clear existing destination before setting new:
               curEG2IntModDestSubItem = HEM_EG_UI_EG2_INT_MOD_TYPE_LAST_ITEM;              
             }else{
               curEG2IntModDestSubItem--;                       
             }             
-          } else {
-            
+          } else if(eg2IntGatedDelayEditPress == true) {            
             if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_MAX_STEPS) {
               if(eg2IntDelayGateMaxSteps <= 0){
                 eg2IntDelayGateMaxSteps = 128;              
@@ -813,7 +1015,6 @@ public:
                 eg2IntDelayGateMaxSteps--;
               }
             }
-
             if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_LENGTH) {
               if(eg2IntDelayGateStepLength <= 0){
                 eg2IntDelayGateStepLength = eg2IntDelayGateMaxSteps;              
@@ -821,7 +1022,6 @@ public:
                 eg2IntDelayGateStepLength--;
               }
             }
-
             if (curEG2IntGatedDelayItem == HEM_EG_UI_EG2_INT_GATE_DELAY_VALUE) {
               if(eg2IntDelayGateModValue <= 0){
                 eg1IntDelayGateModValue = 100;
@@ -829,6 +1029,30 @@ public:
                 eg2IntDelayGateModValue--;
               }
             }
+          //-ghostils: Set Mod TYPE sub parameter for probability:  
+          } else if(eg2IntProbEditPress == true) {
+            if (curEG2IntProbItem == HEM_EG_UI_EG2_INT_PROB_PERCENT) {
+              if(eg2IntProbGatePercent <= 0){
+                eg2IntProbGatePercent = 100;
+              } else {
+                eg2IntProbGatePercent--;
+              }
+            }
+            if (curEG2IntProbItem == HEM_EG_UI_EG2_INT_PROB_TYPE) {
+              if(eg2ProbType <= HEM_EG_UI_EG2_INT_PROB_FIRST_PARAM){
+                //-This should always be atleast one step:
+                eg2ProbType = HEM_EG_UI_EG2_INT_PROB_LAST_PARAM;
+              } else {
+                eg2ProbType--;
+              }
+            }
+            if (curEG2IntProbItem == HEM_EG_UI_EG2_INT_PROB_VALUE) {
+              if(eg2IntProbGateModValue <= 0){
+                eg2IntProbGateModValue = 100;
+              } else {
+                eg2IntProbGateModValue--;
+              }
+            }             
           }
         }
     }
@@ -888,6 +1112,7 @@ private:
     int cv2;
     int cvModDestVal[2][5];
     int intModDestVal[2][5];
+    int intModProbDestVal[2][5];
     
     //-ghostils:Additions for tracking multiple ADSR's in each Hemisphere:
     int curEG;
@@ -924,9 +1149,11 @@ private:
 
     //-ghostils:Internal modulation:
     intModType_t intModType;
-    int egGateCount[2];    
+    int egGateCount[2];
+    int egProbGateCount[2];    
     char *curIntModDestStr[5] = {"ATK","DEC","SUS","REL","STR"};
     char *curIntModDestTypeStr[2] = {"DLY","PRB"};
+    char *curIntProbTypeStr[3] = {"VAL","RND","SNH"};
     int curIntModDestType[2];
     
     int curEG1IntModDest;
@@ -934,14 +1161,20 @@ private:
     int curEG1IntModDestSubItem;
     int curEG1IntModDestType;
     int curEG1IntGatedDelayItem;
-    int curEG1IntProbItem;
-    int eg1IntProbGateMaxSteps;
+    int curEG1IntProbItem;    
     bool eg1IntGatedDelayEditPress;
     bool eg1IntProbEditPress;       
     int eg1IntDelayGateMaxSteps;
     int eg1IntDelayGateStepLength;
     int eg1IntDelayGateModValue;
-    bool eg1IntDelayGateModActive;    
+    bool eg1IntDelayGateModActive;
+    int eg1IntProbGatePercent;
+    int eg1IntProbGateStepLength;
+    int eg1IntProbGateModValue;
+    bool eg1IntProbGateModActive;
+    int eg1ProbTrigger;
+    int eg1ProbType;
+        
     
     
     int curEG2IntModDest;
@@ -949,14 +1182,19 @@ private:
     int curEG2IntModDestSubItem;
     int curEG2IntModDestType;
     int curEG2IntGatedDelayItem;
-    int curEG2IntProbItem;
-    int eg2IntProbGateMaxSteps;
+    int curEG2IntProbItem;    
     bool eg2IntGatedDelayEditPress;
     bool eg2IntProbEditPress;       
     int eg2IntDelayGateMaxSteps;
     int eg2IntDelayGateStepLength;
     int eg2IntDelayGateModValue;
-    bool eg2IntDelayGateModActive;    
+    bool eg2IntDelayGateModActive;
+    int eg2IntProbGatePercent;
+    int eg2IntProbGateStepLength;
+    int eg2IntProbGateModValue;
+    bool eg2IntProbGateModActive;
+    int eg2ProbTrigger;
+    int eg2ProbType;
        
     int curIntAmpStr[2];
     
@@ -1048,8 +1286,8 @@ private:
       gfxPrint(38,46,"STR");
 
       //-ghostils: REMOVE ONCE TESTED FOR INT MOD:
-      //gfxPrint(0,54,egGateCount[1]);
-
+      //gfxPrint(38,54,eg1ProbTrigger);
+      
       //-Center divider:
       gfxLine(28,14,28,54);
             
@@ -1117,10 +1355,12 @@ private:
         
       }else if(curIntModDestType[0] == PROBABILITY){
         gfxLine(0,34,64,34);
-        gfxPrint(0,38,"PER");
-        gfxPrint(0,46,"LEN");
-        gfxPrint(0,54,"VAL");
-        
+        gfxPrint(0,38,"PER");gfxPrint(38,38,eg1IntProbGatePercent);
+        gfxPrint(0,46,"TYP");gfxPrint(38,46,curIntProbTypeStr[eg1ProbType]);
+        gfxPrint(0,54,"VAL");gfxPrint(38,54,eg1IntProbGateModValue);
+        if(curEG1IntProbItem != -1){
+          gfxInvert(eg1ModTypePropertyMenuX[curEG1IntProbItem],eg1ModTypePropertyMenuY[curEG1IntProbItem],HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+        }
       }
       
       //-ghostils:Highlight Int EG1 Mod Destintation Value:     
@@ -1142,26 +1382,27 @@ private:
           gfxInvert(eg2ModTypePropertyMenuX[curEG2IntGatedDelayItem],eg2ModTypePropertyMenuY[curEG2IntGatedDelayItem],HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
         }
         
-      }else if(curIntModDestType[1] == PROBABILITY){
+      } else if(curIntModDestType[1] == PROBABILITY){
         gfxLine(0,34,64,34);
-        gfxPrint(0,38,"PER");
-        gfxPrint(0,46,"LEN");
-        gfxPrint(0,54,"VAL");        
-      }
+        gfxPrint(0,38,"PER");gfxPrint(38,38,eg2IntProbGatePercent);
+        gfxPrint(0,46,"TYP");gfxPrint(38,46,curIntProbTypeStr[eg2ProbType]);
+        gfxPrint(0,54,"VAL");gfxPrint(38,54,eg2IntProbGateModValue);
+        if(curEG2IntProbItem != -1){
+          gfxInvert(eg2ModTypePropertyMenuX[curEG2IntProbItem],eg2ModTypePropertyMenuY[curEG2IntProbItem],HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);      
+        }
       
       //-ghostils:Highlight Int EG1 Mod Destintation Value:     
       //gfxInvert(0,54,HEM_EG_UI_MENU_ITEM_WIDTH,HEM_EG_UI_CHAR_HEIGHT);                      
+      }
     }
-    
 
-
-
+   
     void AttackAmplitude(int ch) {
         //-ghostils:Update to reference current channel:
         //-Remove attack_mod CV:
         //int effective_attack = constrain(attack[ch] + attack_mod, 1, HEM_EG_MAX_VALUE);
         //int effective_attack = constrain(attack[ch], 1, HEM_EG_MAX_VALUE);
-        int effective_attack = constrain(attack[ch] + cvModDestVal[ch][ATTACK] + intModDestVal[ch][ATTACK], 1, HEM_EG_MAX_VALUE);
+        int effective_attack = constrain(attack[ch] + cvModDestVal[ch][ATTACK] + intModDestVal[ch][ATTACK] + intModProbDestVal[ch][ATTACK], 1, HEM_EG_MAX_VALUE);
         int total_stage_ticks = Proportion(effective_attack, HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
         if (effective_attack == 1) ticks_remaining = 0;
@@ -1179,7 +1420,7 @@ private:
     void DecayAmplitude(int ch) {
         //-ghostils:Update to reference current channel:
         //int total_stage_ticks = Proportion(decay[ch], HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
-        int total_stage_ticks = Proportion(decay[ch] + cvModDestVal[ch][DECAY] + intModDestVal[ch][DECAY], HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
+        int total_stage_ticks = Proportion(decay[ch] + cvModDestVal[ch][DECAY] + intModDestVal[ch][DECAY] + intModProbDestVal[ch][DECAY], HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
         simfloat amplitude_remaining = amplitude[ch] - int2simfloat(Proportion(sustain[ch], HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
         if (sustain[ch] == 1) ticks_remaining = 0;
@@ -1196,14 +1437,14 @@ private:
     void SustainAmplitude(int ch) {
         //-ghostils:Update to reference current channel:cvModDestVal[ch][ATTACK]
         //amplitude[ch] = int2simfloat(Proportion(sustain[ch] - 1, HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
-        amplitude[ch] = int2simfloat(Proportion((sustain[ch] + cvModDestVal[ch][SUSTAIN] + intModDestVal[ch][SUSTAIN]) - 1, HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
+        amplitude[ch] = int2simfloat(Proportion((sustain[ch] + cvModDestVal[ch][SUSTAIN] + intModDestVal[ch][SUSTAIN] + intModProbDestVal[ch][SUSTAIN]) - 1, HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
     }
 
     void ReleaseAmplitude(int ch) {
         //-ghostils:Update to reference current channel:
         //-CV1 = ADSR A release MOD, CV2 = ADSR A release MOD
         //int effective_release = constrain(release[ch] + release_mod[ch], 1, HEM_EG_MAX_VALUE) - 1;
-        int effective_release = constrain(release[ch] + cvModDestVal[ch][RELEASE] + intModDestVal[ch][RELEASE], 1, HEM_EG_MAX_VALUE) - 1;
+        int effective_release = constrain(release[ch] + cvModDestVal[ch][RELEASE] + intModDestVal[ch][RELEASE] + intModProbDestVal[ch][RELEASE], 1, HEM_EG_MAX_VALUE) - 1;
         int total_stage_ticks = Proportion(effective_release, HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_R);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
         if (effective_release == 0) ticks_remaining = 0;
@@ -1226,7 +1467,13 @@ private:
 
     //-ghostils: Probability trigger: taken from HEM_Brancher.ino:
     int getProbability(int probability){      
-      return (random(1, 100) <= probability) ? 0 : 1;
+      int trigTrue = 0;
+      if (random(1,100) <= probability){
+        trigTrue = 1; 
+      } else {
+        trigTrue = 0;
+      }
+      return trigTrue;
     }
 };
 
